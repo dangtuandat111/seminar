@@ -17,3 +17,36 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+  Update-VPS-server:
+    runs-on: ubuntu-latest
+    needs: Explore-GitHub-Actions
+    steps:
+      - run: echo "🚀 This job is triggered after the Explore-GitHub-Actions job."
+      - run: echo "🔑 The ${{ secrets.VPS_HOST }} server is now being updated."
+      - run: echo "💻 The ${{ secrets.VPS_USER }} user is updating the server."
+      - run: echo "🔒 The ${{ secrets.VPS_WORK_KEY }} password is used to authenticate."
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_WORK_KEY }}" > ~/.ssh/id_work_seminar
+          chmod 600 ~/.ssh/id_work_seminar
+      - name: Copy deploy script and run it on server
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_WORK_KEY }}
+          source: ".github/scripts/update_server.sh"
+          target: "/tmp"
+      - name: SSH to server and run deploy script
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_WORK_KEY }}
+          script: |
+            chmod +x /tmp/update_server.sh
+            /tmp/update_server.sh
+      - run: echo "🛠️ The server is being updated with the latest code changes."
